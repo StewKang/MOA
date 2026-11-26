@@ -30,6 +30,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Android 에뮬레이터 Impeller OpenGLES 랜더링 검은 화면 이슈 방지 (Skia 랜더러 사용) -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

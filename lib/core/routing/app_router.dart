@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/home/presentation/home_screen.dart';
+import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/tools/presentation/tools_screen.dart';
-import '../../features/travel_plan/presentation/create_travel_plan_screen.dart';
+import '../../features/travel_plan/presentation/screens/all_travel_plans_screen.dart';
+import '../../features/travel_plan/presentation/screens/travel_plan_create_screen.dart';
+import '../../features/travel_plan/presentation/screens/travel_plan_edit_screen.dart';
 import '../../shared/presentation/main_scaffold.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -72,7 +74,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/travel-plan/create',
         name: 'createTravelPlan',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const CreateTravelPlanScreen(),
+        builder: (context, state) => const TravelPlanCreateScreen(),
+      ),
+
+      // 쉘 외부(전체 화면)에서 열리는 메인 타임테이블 편집 화면
+      GoRoute(
+        path: '/travel-plan/edit',
+        name: 'editTravelPlan',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final travelId = state.uri.queryParameters['travelId'];
+          return TravelPlanEditScreen(travelId: travelId);
+        },
+      ),
+
+      // 쉘 외부(전체 화면)에서 열리는 전체 여행 일정 조회 페이지
+      GoRoute(
+        path: '/travel-plan/all',
+        name: 'allTravelPlans',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AllTravelPlansScreen(),
       ),
     ],
   );
