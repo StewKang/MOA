@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "460182623534",
+    "project_id": "moa-remote-storage",
+    "storage_bucket": "moa-remote-storage.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:460182623534:android:78019a60d8a8e3d01316bf",
+        "android_client_info": {
+          "package_name": "com.moa.moa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOb6TUf7M9kjt8k2shBcOEaI7fDEDVzmY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
