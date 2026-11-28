@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/models/travel_plan_model.dart';
 import '../providers/travel_plan_provider.dart';
 import '../widgets/past_plan_import_sheet.dart';
 
@@ -20,6 +21,7 @@ class _TravelPlanCreateScreenState
   final _titleController = TextEditingController();
   final _destinationController = TextEditingController();
   DateTimeRange? _selectedDateRange;
+  TravelPlanModel? _importedPastPlan;
 
   @override
   void initState() {
@@ -68,29 +70,22 @@ class _TravelPlanCreateScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return PastPlanImportSheet(
           pastPlans: allPlans,
-          onSelectPlan: (pastPlan) async {
-            if (_selectedDateRange == null) return;
+          onSelectPlan: (pastPlan) {
+            setState(() {
+              _importedPastPlan = pastPlan;
+              _titleController.text = '${pastPlan.title} (복사본)';
+              _destinationController.text = pastPlan.destination ?? '';
+            });
 
-            final newTitle = _titleController.text.trim().isNotEmpty
-                ? _titleController.text.trim()
-                : '${pastPlan.title} (복사본)';
-
-            await ref.read(travelPlanProvider.notifier).importPastPlan(
-                  pastPlan: pastPlan,
-                  newTitle: newTitle,
-                  newStartDate: _selectedDateRange!.start,
-                  newEndDate: _selectedDateRange!.end,
-                );
-
-            if (mounted) {
-              final currentPlan = ref.read(travelPlanProvider).currentPlan;
-              if (currentPlan != null) {
-                context.pushReplacement('/travel-plan/edit?travelId=${currentPlan.travelId}');
-              }
-            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('\'${pastPlan.title}\' 일정을 불러왔습니다.'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           },
         );
       },
@@ -99,14 +94,25 @@ class _TravelPlanCreateScreenState
 
   Future<void> _submitNewPlan() async {
     if (_formKey.currentState!.validate() && _selectedDateRange != null) {
-      await ref.read(travelPlanProvider.notifier).initNewPlan(
-            title: _titleController.text.trim(),
-            startDate: _selectedDateRange!.start,
-            endDate: _selectedDateRange!.end,
-            destination: _destinationController.text.trim().isNotEmpty
-                ? _destinationController.text.trim()
-                : null,
-          );
+      if (_importedPastPlan != null) {
+        // 불러온 과거 일정을 바탕으로 복사 생성
+        await ref.read(travelPlanProvider.notifier).importPastPlan(
+              pastPlan: _importedPastPlan!,
+              newTitle: _titleController.text.trim(),
+              newStartDate: _selectedDateRange!.start,
+              newEndDate: _selectedDateRange!.end,
+            );
+      } else {
+        // 일반 신규 작성 생성
+        await ref.read(travelPlanProvider.notifier).initNewPlan(
+              title: _titleController.text.trim(),
+              startDate: _selectedDateRange!.start,
+              endDate: _selectedDateRange!.end,
+              destination: _destinationController.text.trim().isNotEmpty
+                  ? _destinationController.text.trim()
+                  : null,
+            );
+      }
 
       if (mounted) {
         final currentPlan = ref.read(travelPlanProvider).currentPlan;
