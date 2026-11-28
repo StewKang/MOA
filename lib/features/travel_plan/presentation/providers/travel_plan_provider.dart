@@ -352,9 +352,17 @@ class TravelPlanNotifier extends StateNotifier<TravelPlanState> {
   }
 }
 
-/// Provider 생성 - SQLite 기반 저장소 주입
+import 'package:moa/features/travel_plan/data/repositories/firebase_travel_plan_repository.dart';
+import 'package:moa/features/travel_plan/data/repositories/sync_travel_plan_repository.dart';
+
+/// Provider 생성 - SQLite(로컬 캐시) + Firebase(원격) 하이브리드 동기화 저장소 주입
 final travelPlanRepositoryProvider = Provider<TravelPlanRepository>((ref) {
-  return SqliteTravelPlanRepository(AppDatabase.instance);
+  final localRepo = SqliteTravelPlanRepository(AppDatabase.instance);
+  final remoteRepo = FirebaseTravelPlanRepository();
+  return SyncTravelPlanRepository(
+    localRepository: localRepo,
+    remoteRepository: remoteRepo,
+  );
 });
 
 final travelPlanProvider =
