@@ -80,17 +80,25 @@ class FirebaseTravelPlanRepository implements TravelPlanRepository {
       final snapshot = await _plansCollection
           .doc(travelId)
           .collection('schedules')
-          .orderBy('date', descending: false)
-          .orderBy('startSlotIndex', descending: false)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final items = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         data['travelId'] = travelId;
         return ScheduleItemModel.fromJson(data);
       }).toList();
-    } catch (e) {
+
+      // Firestore 복합 인덱스(Composite Index) 요구 에러를 방지하기 위해 클라이언트 정렬
+      items.sort((a, b) {
+        final dateComp = a.date.compareTo(b.date);
+        if (dateComp != 0) return dateComp;
+        return a.startSlotIndex.compareTo(b.startSlotIndex);
+      });
+
+      return items;
+    } catch (e, stackTrace) {
+      print('Firebase getScheduleItems 조회 실패: $e\n$stackTrace');
       return [];
     }
   }

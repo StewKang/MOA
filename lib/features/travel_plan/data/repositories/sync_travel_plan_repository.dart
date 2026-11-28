@@ -86,14 +86,18 @@ class SyncTravelPlanRepository implements TravelPlanRepository {
   @override
   Future<List<ScheduleItemModel>> getScheduleItems(String travelId) async {
     final localItems = await localRepository.getScheduleItems(travelId);
-    if (localItems.isNotEmpty) return localItems;
 
-    // 로컬 일정 없으면 Firebase 조회 후 로컬 저장
-    final remoteItems = await remoteRepository.getScheduleItems(travelId);
-    if (remoteItems.isNotEmpty) {
-      await localRepository.saveScheduleItems(travelId, remoteItems);
+    try {
+      final remoteItems = await remoteRepository.getScheduleItems(travelId);
+      if (remoteItems.isNotEmpty) {
+        await localRepository.saveScheduleItems(travelId, remoteItems);
+        return remoteItems;
+      }
+    } catch (e) {
+      print('Firebase 세부 일정 동기화 에러: $e');
     }
-    return remoteItems;
+
+    return localItems;
   }
 
   @override
@@ -105,7 +109,9 @@ class SyncTravelPlanRepository implements TravelPlanRepository {
     // 2. 원격 업로드
     try {
       await remoteRepository.saveScheduleItems(travelId, items);
-    } catch (_) {}
+    } catch (e) {
+      print('Firebase 세부 일정 원격 업로드 에러: $e');
+    }
   }
 
   @override
@@ -116,12 +122,17 @@ class SyncTravelPlanRepository implements TravelPlanRepository {
     } catch (_) {}
   }
 
-  /// 백그라운드 원격 <-> 로컬 데이터 동기화
+  /// 백그라운드 원격 <-> 로컬 데이터 동기화 (메타데이터 및 세부 타임테이블 동시 백업)
   Future<void> _syncWithRemoteInBackground() async {
     try {
       final remotePlans = await remoteRepository.getAllTravelPlans();
       for (final plan in remotePlans) {
         await localRepository.saveTravelPlan(plan);
+        final remoteItems =
+            await remoteRepository.getScheduleItems(plan.travelId);
+        if (remoteItems.isNotEmpty) {
+          await localRepository.saveScheduleItems(plan.travelId, remoteItems);
+        }
       }
     } catch (_) {}
   }
