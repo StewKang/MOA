@@ -11,6 +11,8 @@ class ScheduleItemModel {
   final String category; // 'activity', 'transport', 'meal', 'custom'
   final String title;
   final String location;
+  final double? latitude;
+  final double? longitude;
   final String memo;
 
   // 이동 카테고리 전용 상세 정보
@@ -27,6 +29,8 @@ class ScheduleItemModel {
     required this.category,
     required this.title,
     this.location = '',
+    this.latitude,
+    this.longitude,
     this.memo = '',
     this.origin = '',
     this.destination = '',
@@ -112,6 +116,8 @@ class ScheduleItemModel {
     String? category,
     String? title,
     String? location,
+    double? latitude,
+    double? longitude,
     String? memo,
     String? origin,
     String? destination,
@@ -126,6 +132,8 @@ class ScheduleItemModel {
       category: category ?? this.category,
       title: title ?? this.title,
       location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       memo: memo ?? this.memo,
       origin: origin ?? this.origin,
       destination: destination ?? this.destination,
@@ -143,6 +151,8 @@ class ScheduleItemModel {
       'category': category,
       'title': title,
       'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
       'memo': memo,
       'origin': origin,
       'destination': destination,
@@ -160,6 +170,8 @@ class ScheduleItemModel {
       category: json['category'] as String,
       title: json['title'] as String,
       location: json['location'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       memo: json['memo'] as String? ?? '',
       origin: json['origin'] as String? ?? '',
       destination: json['destination'] as String? ?? '',
@@ -178,6 +190,8 @@ class ScheduleItemModel {
       'category': category,
       'title': title,
       'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
       'memo': memo,
       'origin': origin,
       'destination': destination,
@@ -196,6 +210,8 @@ class ScheduleItemModel {
       category: map['category'] as String,
       title: map['title'] as String,
       location: map['location'] as String? ?? '',
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
       memo: map['memo'] as String? ?? '',
       origin: map['origin'] as String? ?? '',
       destination: map['destination'] as String? ?? '',

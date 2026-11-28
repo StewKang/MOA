@@ -10,6 +10,9 @@ class TravelPlanModel {
   final bool isFavorite;
   final bool isCompleted;
   final String? destination;
+  final String? ownerId;
+  final String? inviteCode;
+  final DateTime? updatedAt;
 
   const TravelPlanModel({
     required this.travelId,
@@ -19,6 +22,9 @@ class TravelPlanModel {
     this.isFavorite = false,
     this.isCompleted = false,
     this.destination,
+    this.ownerId,
+    this.inviteCode,
+    this.updatedAt,
   });
 
   /// 여행 기간(일수) 계산
@@ -41,6 +47,9 @@ class TravelPlanModel {
     bool? isFavorite,
     bool? isCompleted,
     String? destination,
+    String? ownerId,
+    String? inviteCode,
+    DateTime? updatedAt,
   }) {
     return TravelPlanModel(
       travelId: travelId ?? this.travelId,
@@ -50,6 +59,9 @@ class TravelPlanModel {
       isFavorite: isFavorite ?? this.isFavorite,
       isCompleted: isCompleted ?? this.isCompleted,
       destination: destination ?? this.destination,
+      ownerId: ownerId ?? this.ownerId,
+      inviteCode: inviteCode ?? this.inviteCode,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -62,6 +74,9 @@ class TravelPlanModel {
       'isFavorite': isFavorite,
       'isCompleted': isCompleted,
       'destination': destination,
+      'ownerId': ownerId,
+      'inviteCode': inviteCode,
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
@@ -74,6 +89,11 @@ class TravelPlanModel {
       isFavorite: json['isFavorite'] as bool? ?? false,
       isCompleted: json['isCompleted'] as bool? ?? false,
       destination: json['destination'] as String?,
+      ownerId: json['ownerId'] as String?,
+      inviteCode: json['inviteCode'] as String?,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
     );
   }
 
@@ -87,6 +107,9 @@ class TravelPlanModel {
       'destination': destination,
       'is_favorite': isFavorite ? 1 : 0,
       'is_completed': isCompleted ? 1 : 0,
+      'owner_id': ownerId,
+      'invite_code': inviteCode,
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
@@ -100,6 +123,11 @@ class TravelPlanModel {
       destination: map['destination'] as String?,
       isFavorite: (map['is_favorite'] as int? ?? 0) == 1,
       isCompleted: (map['is_completed'] as int? ?? 0) == 1,
+      ownerId: map['owner_id'] as String?,
+      inviteCode: map['invite_code'] as String?,
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
+          : null,
     );
   }
 }

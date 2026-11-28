@@ -42,7 +42,7 @@ class AppDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         // SQLite 외래키(Foreign Key) 제약조건 활성화
         await db.execute('PRAGMA foreign_keys = ON;');
@@ -51,12 +51,28 @@ class AppDatabase {
         await _createTables(db);
         await _seedInitialData(db);
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await _upgradeTablesToV2(db);
+        }
+      },
     );
   }
 
-  /// DDL 구문: travel_plans 및 schedule_items 테이블 생성
+  /// DDL 구문: 테이블 생성 (v2 스키마 반영)
   Future<void> _createTables(Database db) async {
-    // 1. 여행 계획 메타데이터 테이블
+    // 1. 사용자 정보 테이블
+    await db.execute('''
+      CREATE TABLE users (
+        user_id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        nickname TEXT NOT NULL,
+        profile_image_url TEXT,
+        created_at TEXT NOT NULL
+      );
+    ''');
+
+    // 2. 여행 계획 메타데이터 테이블
     await db.execute('''
       CREATE TABLE travel_plans (
         travel_id TEXT PRIMARY KEY,
@@ -65,11 +81,26 @@ class AppDatabase {
         end_date TEXT NOT NULL,
         destination TEXT,
         is_favorite INTEGER NOT NULL DEFAULT 0,
-        is_completed INTEGER NOT NULL DEFAULT 0
+        is_completed INTEGER NOT NULL DEFAULT 0,
+        owner_id TEXT,
+        invite_code TEXT,
+        updated_at TEXT
       );
     ''');
 
-    // 2. 개별 일정 타임 블록 테이블 (외래키 CASCADE 삭제 지원)
+    // 3. 여행 동행자 멤버 관계 테이블
+    await db.execute('''
+      CREATE TABLE travel_members (
+        plan_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'MEMBER',
+        joined_at TEXT NOT NULL,
+        PRIMARY KEY (plan_id, user_id),
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    // 4. 개별 일정 타임 블록 테이블 (외래키 CASCADE 삭제 지원)
     await db.execute('''
       CREATE TABLE schedule_items (
         id TEXT PRIMARY KEY,
@@ -80,11 +111,130 @@ class AppDatabase {
         category TEXT NOT NULL,
         title TEXT NOT NULL,
         location TEXT,
+        latitude REAL,
+        longitude REAL,
         memo TEXT,
         origin TEXT,
         destination TEXT,
         transport_mode TEXT,
         FOREIGN KEY (travel_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    // 5. 정산 & N빵 계산 내역 테이블
+    await db.execute('''
+      CREATE TABLE expenses (
+        expense_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        payer_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        split_members TEXT,
+        is_settled INTEGER NOT NULL DEFAULT 0,
+        expense_date TEXT NOT NULL,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    // 6. 준비물 체크리스트 테이블
+    await db.execute('''
+      CREATE TABLE checklists (
+        item_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        item_name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT '일반',
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        assigned_user_id TEXT,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    // 7. 오프라인 지도 & 메모 테이블
+    await db.execute('''
+      CREATE TABLE memos (
+        memo_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT,
+        latitude REAL,
+        longitude REAL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+  }
+
+  /// v1 -> v2 마이그레이션 스크립트
+  Future<void> _upgradeTablesToV2(Database db) async {
+    // travel_plans 신규 컬럼 추가
+    await db.execute('ALTER TABLE travel_plans ADD COLUMN owner_id TEXT;');
+    await db.execute('ALTER TABLE travel_plans ADD COLUMN invite_code TEXT;');
+    await db.execute('ALTER TABLE travel_plans ADD COLUMN updated_at TEXT;');
+
+    // schedule_items 위경도 컬럼 추가
+    await db.execute('ALTER TABLE schedule_items ADD COLUMN latitude REAL;');
+    await db.execute('ALTER TABLE schedule_items ADD COLUMN longitude REAL;');
+
+    // 신규 테이블 생성
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        user_id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        nickname TEXT NOT NULL,
+        profile_image_url TEXT,
+        created_at TEXT NOT NULL
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS travel_members (
+        plan_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'MEMBER',
+        joined_at TEXT NOT NULL,
+        PRIMARY KEY (plan_id, user_id),
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS expenses (
+        expense_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        payer_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        split_members TEXT,
+        is_settled INTEGER NOT NULL DEFAULT 0,
+        expense_date TEXT NOT NULL,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS checklists (
+        item_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        item_name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT '일반',
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        assigned_user_id TEXT,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS memos (
+        memo_id TEXT PRIMARY KEY,
+        plan_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT,
+        latitude REAL,
+        longitude REAL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (plan_id) REFERENCES travel_plans (travel_id) ON DELETE CASCADE
       );
     ''');
   }
