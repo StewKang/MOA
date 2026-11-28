@@ -17,16 +17,18 @@ class FirebaseTravelPlanRepository implements TravelPlanRepository {
   @override
   Future<List<TravelPlanModel>> getAllTravelPlans() async {
     try {
-      final snapshot = await _plansCollection
-          .orderBy('startDate', descending: true)
-          .get();
+      final snapshot = await _plansCollection.get();
 
-      return snapshot.docs.map((doc) {
+      final plans = snapshot.docs.map((doc) {
         final data = doc.data();
         data['travelId'] = doc.id;
         return TravelPlanModel.fromJson(data);
       }).toList();
-    } catch (e) {
+
+      plans.sort((a, b) => b.startDate.compareTo(a.startDate));
+      return plans;
+    } catch (e, stackTrace) {
+      print('Firebase getAllTravelPlans 에러: $e\n$stackTrace');
       return [];
     }
   }

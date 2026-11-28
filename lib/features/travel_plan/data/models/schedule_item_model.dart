@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 /// 개별 일정 블록 모델
@@ -161,10 +162,16 @@ class ScheduleItemModel {
   }
 
   factory ScheduleItemModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic value) {
+      if (value is String) return DateTime.parse(value);
+      if (value is Timestamp) return value.toDate();
+      return DateTime.now();
+    }
+
     return ScheduleItemModel(
       id: json['id'] as String,
       travelId: json['travelId'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: parseDate(json['date']),
       startSlotIndex: json['startSlotIndex'] as int,
       durationSlots: json['durationSlots'] as int,
       category: json['category'] as String,

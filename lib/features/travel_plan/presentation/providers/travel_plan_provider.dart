@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moa/core/database/app_database.dart';
 import 'package:moa/features/travel_plan/data/models/schedule_item_model.dart';
 import 'package:moa/features/travel_plan/data/models/travel_plan_model.dart';
+import 'package:moa/features/travel_plan/data/repositories/firebase_travel_plan_repository.dart';
 import 'package:moa/features/travel_plan/data/repositories/sqlite_travel_plan_repository.dart';
+import 'package:moa/features/travel_plan/data/repositories/sync_travel_plan_repository.dart';
 import 'package:moa/features/travel_plan/data/repositories/travel_plan_repository.dart';
 
 /// 일정 카드의 2D 타임테이블 레이아웃 계산 정보
@@ -351,9 +353,6 @@ class TravelPlanNotifier extends StateNotifier<TravelPlanState> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }
-
-import 'package:moa/features/travel_plan/data/repositories/firebase_travel_plan_repository.dart';
-import 'package:moa/features/travel_plan/data/repositories/sync_travel_plan_repository.dart';
 
 /// Provider 생성 - SQLite(로컬 캐시) + Firebase(원격) 하이브리드 동기화 저장소 주입
 final travelPlanRepositoryProvider = Provider<TravelPlanRepository>((ref) {

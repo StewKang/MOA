@@ -14,14 +14,37 @@ class SyncTravelPlanRepository implements TravelPlanRepository {
     required this.remoteRepository,
   });
 
-  /// 모든 여행 계획 조회 (로컬 캐시 먼저 즉시 반환, 비동기 원격 Sync 진행)
+  /// 모든 여행 계획 조회 (로컬 캐시 + Firebase 원격 데이터 스마트 병합 동기화)
   @override
   Future<List<TravelPlanModel>> getAllTravelPlans() async {
-    // 1. SQLite 로컬 데이터 즉시 로드
+    // 1. SQLite 로컬 데이터 로드
     final localPlans = await localRepository.getAllTravelPlans();
 
-    // 2. 비동기로 Firebase 원격 데이터 수집 및 로컬 동기화 (백그라운드)
-    _syncWithRemoteInBackground();
+    // 2. Firebase 원격 데이터 수집 및 스마트 동기화
+    try {
+      final remotePlans = await remoteRepository.getAllTravelPlans();
+      if (remotePlans.isNotEmpty) {
+        // 원격 데이터 로컬 DB에 캐싱
+        for (final plan in remotePlans) {
+          await localRepository.saveTravelPlan(plan);
+        }
+
+        // 로컬 + 원격 데이터 병합 (travelId 기준 중복 제거 및 최신화)
+        final Map<String, TravelPlanModel> planMap = {};
+        for (final plan in localPlans) {
+          planMap[plan.travelId] = plan;
+        }
+        for (final plan in remotePlans) {
+          planMap[plan.travelId] = plan;
+        }
+
+        final mergedPlans = planMap.values.toList();
+        mergedPlans.sort((a, b) => b.startDate.compareTo(a.startDate));
+        return mergedPlans;
+      }
+    } catch (e) {
+      print('Firebase 원격 데이터 동기화 에러: $e');
+    }
 
     return localPlans;
   }

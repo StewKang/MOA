@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 /// 전체 여행 계획 메타데이터 모델
@@ -81,19 +82,30 @@ class TravelPlanModel {
   }
 
   factory TravelPlanModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic value) {
+      if (value is String) return DateTime.parse(value);
+      if (value is Timestamp) return value.toDate();
+      return DateTime.now();
+    }
+
+    DateTime? parseNullableDate(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return DateTime.tryParse(value);
+      if (value is Timestamp) return value.toDate();
+      return null;
+    }
+
     return TravelPlanModel(
       travelId: json['travelId'] as String,
       title: json['title'] as String,
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: DateTime.parse(json['endDate'] as String),
+      startDate: parseDate(json['startDate']),
+      endDate: parseDate(json['endDate']),
       isFavorite: json['isFavorite'] as bool? ?? false,
       isCompleted: json['isCompleted'] as bool? ?? false,
       destination: json['destination'] as String?,
       ownerId: json['ownerId'] as String?,
       inviteCode: json['inviteCode'] as String?,
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+      updatedAt: parseNullableDate(json['updatedAt']),
     );
   }
 

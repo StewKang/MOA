@@ -11,28 +11,39 @@ class ToolsScreen extends StatelessWidget {
 
     final tools = [
       {
+        'title': '이동시간 기반 중간 집결지 산정',
+        'subtitle': '팀원들의 출발 위치를 기반으로 최적의 중간 집결지를 추천합니다.',
+        'icon': Icons.location_searching_rounded,
+        'color': colorScheme.primary,
+        'tag': 'meeting_point',
+      },
+      {
         'title': '정산 & N빵 계산기',
         'subtitle': '함께한 여행 경비를 손쉽게 나누어 정산하세요.',
         'icon': Icons.calculate_outlined,
-        'color': colorScheme.primary,
+        'color': colorScheme.secondary,
+        'tag': 'expense',
       },
       {
         'title': '실시간 환율 변환기',
         'subtitle': '해외 여행 시 각국 통화를 빠르게 계산합니다.',
         'icon': Icons.currency_exchange_rounded,
-        'color': colorScheme.secondary,
+        'color': colorScheme.tertiary,
+        'tag': 'exchange',
       },
       {
         'title': '준비물 체크리스트',
         'subtitle': '놓치기 쉬운 여행 준비물을 팀원과 공유하세요.',
         'icon': Icons.checklist_rounded,
-        'color': colorScheme.tertiary,
+        'color': colorScheme.primary,
+        'tag': 'checklist',
       },
       {
         'title': '오프라인 지도 및 메모',
         'subtitle': '네트워크 없이도 일정과 주요 위치를 확인하세요.',
         'icon': Icons.map_outlined,
-        'color': colorScheme.primary,
+        'color': colorScheme.secondary,
+        'tag': 'offline_map',
       },
     ];
 
